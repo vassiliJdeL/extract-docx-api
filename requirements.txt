@@ -1,2 +1,3 @@
-flask
+fastapi
 python-docx
+uvicorn
