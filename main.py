@@ -1,25 +1,32 @@
-from flask import Flask, request, jsonify
-from docx import Document
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+import requests
 from io import BytesIO
+import docx
 
-app = Flask(__name__)
+app = FastAPI()
 
-@app.route("/")
-def index():
-    return "API is running"
+class FileURL(BaseModel):
+    url: str
 
-@app.route("/extract", methods=["POST"])
-def extract_text():
-    if 'file' not in request.files:
-        return jsonify({"error": "No file provided"}), 400
-
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({"error": "Empty filename"}), 400
-
+@app.post("/extract-text")
+async def extract_text_from_docx(file: FileURL):
     try:
-        doc = Document(BytesIO(file.read()))
-        text = "\n".join([para.text for para in doc.paragraphs])
-        return jsonify({"text": text})
+        # Télécharger le fichier .docx depuis l'URL
+        response = requests.get(file.url)
+        response.raise_for_status()
+
+        # Charger le fichier dans python-docx
+        doc = docx.Document(BytesIO(response.content))
+
+        # Extraire le texte
+        full_text = "\n".join([para.text for para in doc.paragraphs])
+
+        return {"text": full_text}
+
+    except requests.exceptions.RequestException as e:
+        return JSONResponse(status_code=400, content={"error": f"Erreur lors du téléchargement du fichier : {str(e)}"})
+
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return JSONResponse(status_code=500, content={"error": f"Erreur lors du traitement du fichier : {str(e)}"})

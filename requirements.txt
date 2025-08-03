@@ -1,3 +1,4 @@
 fastapi
-python-docx
 uvicorn
+python-docx
+requests
