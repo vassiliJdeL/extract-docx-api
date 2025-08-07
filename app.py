@@ -7,6 +7,12 @@ import docx
 
 app = FastAPI()
 
+# === Nouveau endpoint /ping pour cron-job.org ===
+@app.get("/ping")
+def ping():
+    return {"status": "ok"}
+
+# === Modèle pour extraire le texte depuis une URL ===
 class FileURL(BaseModel):
     url: str
 
